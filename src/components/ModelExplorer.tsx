@@ -47,12 +47,13 @@ type Row = ApiModel & {
 };
 
 type SortKey = "release" | "updated" | "context" | "inputCost" | "outputCost" | "providerName" | "name";
+type SortDirection = "ascending" | "descending";
 type ReleaseFilter = "all" | "thisYear" | "lastYear" | "last90" | "last180" | "undated";
 type ModelIndex = {
   rows: Row[];
   providers: string[];
   stats: { providers: number; models: number; reasoning: number; open: number; tools: number };
-  sortedIds: Record<SortKey, Uint32Array>;
+  ascendingIds: Record<SortKey, Uint32Array>;
 };
 
 type ExplorerState = {
@@ -69,6 +70,7 @@ type ExplorerState = {
   weights: string;
   releaseFilter: ReleaseFilter;
   sort: SortKey;
+  sortDirection: SortDirection;
   setQuery: (value: string) => void;
   toggleProvider: (value: string) => void;
   selectAllProviders: () => void;
@@ -77,7 +79,7 @@ type ExplorerState = {
   setCapability: (value: string) => void;
   setWeights: (value: string) => void;
   setReleaseFilter: (value: ReleaseFilter) => void;
-  setSort: (value: SortKey) => void;
+  selectSort: (value: SortKey) => void;
   reset: () => void;
 };
 
@@ -96,7 +98,7 @@ const EMPTY_INDEX: ModelIndex = {
   rows: [],
   providers: [],
   stats: EMPTY_STATS,
-  sortedIds: {
+  ascendingIds: {
     release: new Uint32Array(),
     updated: new Uint32Array(),
     context: new Uint32Array(),
@@ -113,6 +115,15 @@ const currentYear = new Date().getFullYear();
 const nowTime = Date.now();
 const dayMs = 24 * 60 * 60 * 1000;
 const FRONTIER_PROVIDERS = ["OpenAI", "Google", "Anthropic", "Z.AI", "xAI"] as const;
+const DEFAULT_SORT_DIRECTIONS: Record<SortKey, SortDirection> = {
+  release: "descending",
+  updated: "descending",
+  context: "descending",
+  inputCost: "ascending",
+  outputCost: "ascending",
+  providerName: "ascending",
+  name: "ascending",
+};
 const getAvailableFrontierProviders = (providers: readonly string[]) =>
   FRONTIER_PROVIDERS.filter((provider) => providers.includes(provider));
 const isExactProviderSelection = (selectedProviders: ReadonlySet<string>, providers: readonly string[]) =>
@@ -143,6 +154,9 @@ function useModelData(): ExplorerState {
   const [weights, setWeights] = useState("all");
   const [releaseFilter, setReleaseFilter] = useState<ReleaseFilter>("all");
   const [sort, setSort] = useState<SortKey>("release");
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    DEFAULT_SORT_DIRECTIONS.release,
+  );
   const [error, setError] = useState("");
   const deferredQuery = useDeferredValue(query);
 
@@ -166,7 +180,7 @@ function useModelData(): ExplorerState {
   }, []);
 
   const result = useMemo(() => {
-    const sourceIds = index.sortedIds[sort];
+    const sourceIds = index.ascendingIds[sort];
     const terms = deferredQuery
       .trim()
       .toLowerCase()
@@ -176,9 +190,11 @@ function useModelData(): ExplorerState {
     const requiredWeights = weightsMasks[weights as keyof typeof weightsMasks] ?? 0;
     const visible: Row[] = [];
     let filteredCount = 0;
+    const isAscending = sortDirection === "ascending";
 
     for (let cursor = 0; cursor < sourceIds.length; cursor += 1) {
-      const row = index.rows[sourceIds[cursor]];
+      const rowIndex = isAscending ? cursor : sourceIds.length - cursor - 1;
+      const row = index.rows[sourceIds[rowIndex]];
       if (!selectedProviders.has(row.providerName)) continue;
       if (requiredCapability && (row.capabilityMask & requiredCapability) === 0) continue;
       if (requiredWeights && (row.weightsMask & requiredWeights) === 0) continue;
@@ -189,7 +205,7 @@ function useModelData(): ExplorerState {
     }
 
     return { visible, filteredCount };
-  }, [capability, deferredQuery, index, releaseFilter, selectedProviders, sort, weights]);
+  }, [capability, deferredQuery, index, releaseFilter, selectedProviders, sort, sortDirection, weights]);
 
   const reset = () => {
     setQuery("");
@@ -198,6 +214,16 @@ function useModelData(): ExplorerState {
     setWeights("all");
     setReleaseFilter("all");
     setSort("release");
+    setSortDirection(DEFAULT_SORT_DIRECTIONS.release);
+  };
+
+  const selectSort = (nextSort: SortKey) => {
+    if (nextSort === sort) {
+      setSortDirection((current) => current === "ascending" ? "descending" : "ascending");
+      return;
+    }
+    setSort(nextSort);
+    setSortDirection(DEFAULT_SORT_DIRECTIONS[nextSort]);
   };
 
   return {
@@ -214,6 +240,7 @@ function useModelData(): ExplorerState {
     weights,
     releaseFilter,
     sort,
+    sortDirection,
     setQuery,
     toggleProvider: (value) =>
       setSelectedProviders((current) => {
@@ -229,7 +256,7 @@ function useModelData(): ExplorerState {
     setCapability,
     setWeights,
     setReleaseFilter,
-    setSort,
+    selectSort,
     reset,
   };
 }
@@ -302,10 +329,10 @@ function buildModelIndex(data: Record<string, ApiProvider>): ModelIndex {
     rows,
     providers: [...providerSet].sort((a, b) => a.localeCompare(b)),
     stats: { providers: providerSet.size, models: rows.length, reasoning, open, tools },
-    sortedIds: {
-      release: toTypedIds([...ids].sort((a, b) => rows[b].releaseTime - rows[a].releaseTime)),
-      updated: toTypedIds([...ids].sort((a, b) => rows[b].updatedTime - rows[a].updatedTime)),
-      context: toTypedIds([...ids].sort((a, b) => rows[b].contextLimit - rows[a].contextLimit)),
+    ascendingIds: {
+      release: toTypedIds([...ids].sort((a, b) => rows[a].releaseTime - rows[b].releaseTime)),
+      updated: toTypedIds([...ids].sort((a, b) => rows[a].updatedTime - rows[b].updatedTime)),
+      context: toTypedIds([...ids].sort((a, b) => rows[a].contextLimit - rows[b].contextLimit)),
       inputCost: toTypedIds([...ids].sort((a, b) => rows[a].inputCost - rows[b].inputCost)),
       outputCost: toTypedIds([...ids].sort((a, b) => rows[a].outputCost - rows[b].outputCost)),
       providerName: toTypedIds([...ids].sort((a, b) => {
@@ -704,7 +731,7 @@ function StatusBar({ state }: { state: ExplorerState }) {
     <div className="status-bar" aria-live="polite">
       <span>{state.isLoading ? "Loading models" : `${state.filteredCount.toLocaleString()} selected models`}</span>
       <span>{state.selectedProviders.size} / {state.providers.length} providers</span>
-      <span>Sort: {sortLabel(state.sort)}</span>
+      <span>Sort: {sortLabel(state.sort)}, {state.sortDirection}</span>
       {state.visible.length < state.filteredCount ? <span>Showing first {state.visible.length}</span> : null}
     </div>
   );
@@ -782,8 +809,14 @@ function ModelTable({ state }: { state: ExplorerState }) {
 function SortHeader({ label, description, sort, state }: { label: string; description?: string; sort: SortKey; state: ExplorerState }) {
   const active = state.sort === sort;
   return (
-    <button className={`header-cell sortable ${active ? "active" : ""}`} type="button" role="columnheader" onClick={() => state.setSort(sort)}>
-      <span>{label}{active ? " ↑" : ""}</span>
+    <button
+      className={`header-cell sortable ${active ? "active" : ""}`}
+      type="button"
+      role="columnheader"
+      aria-sort={active ? state.sortDirection : "none"}
+      onClick={() => state.selectSort(sort)}
+    >
+      <span>{label}{active ? state.sortDirection === "ascending" ? " ↑" : " ↓" : ""}</span>
       {description ? <small>{description}</small> : null}
     </button>
   );
