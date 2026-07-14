@@ -839,6 +839,11 @@ button.header-cell:hover,
     display: none;
   }
 
+  .capability-filter,
+  .capability-filter-separator {
+    display: none;
+  }
+
   .provider-menu {
     left: 8px;
   }

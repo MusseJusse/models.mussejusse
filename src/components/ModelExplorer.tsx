@@ -403,9 +403,9 @@ function FilterBar({ state }: { state: ExplorerState }) {
     <section className="filter-bar" aria-label="Model filters">
       <span className="filter-label">Filters</span>
       <ProviderPicker state={state} />
-      <span className="filter-separator" aria-hidden="true" />
+      <span className="filter-separator capability-filter-separator" aria-hidden="true" />
 
-      <div className="filter-group" aria-label="Capability">
+      <div className="filter-group capability-filter" aria-label="Capability">
         {[
           ["all", "All"],
           ["reasoning", "Reasoning"],
