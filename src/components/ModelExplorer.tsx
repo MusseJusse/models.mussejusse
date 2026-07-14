@@ -171,7 +171,7 @@ function useModelData(): ExplorerState {
       })
       .catch(() => {
         if (!active) return;
-        setError("The model catalogue could not be loaded. Check your connection and try again.");
+        setError("The model catalog could not be loaded. Check your connection and try again.");
         setIsLoading(false);
       });
     return () => {
@@ -276,7 +276,7 @@ function loadModelIndex() {
   if (indexCache) return Promise.resolve(indexCache);
   indexPromise ??= fetch("https://models.dev/api.json", { cache: "force-cache" })
     .then((response) => {
-      if (!response.ok) throw new Error("Model catalogue request failed");
+      if (!response.ok) throw new Error("Model catalog request failed");
       return response.json();
     })
     .then((data: Record<string, ApiProvider>) => {
@@ -367,7 +367,7 @@ function CatalogHeader({ state }: { state: ExplorerState }) {
       <div className="catalog-title">
         <strong>models.dev</strong>
         <span className="title-slash" aria-hidden="true" />
-        <span>{state.isLoading ? "Loading model catalogue" : `${state.stats.models.toLocaleString()} AI models`}</span>
+        <span>{state.isLoading ? "Loading model catalog" : `${state.stats.models.toLocaleString()} AI models`}</span>
       </div>
 
       <div className="header-actions">
@@ -768,7 +768,7 @@ function ModelTable({ state }: { state: ExplorerState }) {
       </div>
 
       {state.error ? (
-        <TableState icon={<Database />} title="Catalogue unavailable" message={state.error} action="Try again" onAction={() => window.location.reload()} />
+        <TableState icon={<Database />} title="Catalog unavailable" message={state.error} action="Try again" onAction={() => window.location.reload()} />
       ) : state.isLoading ? (
         <LoadingRows />
       ) : state.visible.length === 0 ? (
