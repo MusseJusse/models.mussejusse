@@ -114,7 +114,7 @@ const weightsMasks = {
   closed: 2,
 } as const;
 
-const defaultProviderNames = ["OpenAI", "Anthropic", "Google", "Z.AI"];
+const defaultProviderNames = ["OpenAI", "Google", "Anthropic", "Z.AI", "xAI"];
 const FRONTIER_PROVIDERS = ["OpenAI", "Google", "Anthropic", "Z.AI", "xAI"] as const;
 const currentYear = new Date().getFullYear();
 const nowTime = Date.now();
