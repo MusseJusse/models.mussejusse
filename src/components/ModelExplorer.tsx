@@ -416,38 +416,232 @@ function FilterBar({ state }: { state: ExplorerState }) {
         ))}
       </div>
 
-      <label className="filter-select">
-        <span>Released</span>
-        <select value={state.releaseFilter} onChange={(event) => state.setReleaseFilter(event.target.value as ReleaseFilter)}>
-          <option value="all">Any date</option>
-          <option value="thisYear">{currentYear}</option>
-          <option value="lastYear">{currentYear - 1}</option>
-          <option value="last90">Last 90 days</option>
-          <option value="last180">Last 180 days</option>
-          <option value="undated">No date</option>
-        </select>
-        <CaretDown aria-hidden="true" />
-      </label>
+      <ReleasePicker state={state} />
 
       {hasFilters ? <button className="reset-button" type="button" onClick={state.reset}>Reset</button> : null}
     </section>
   );
 }
 
-function ProviderPicker({ state }: { state: ExplorerState }) {
+function useDismissibleDetails() {
   const pickerRef = useRef<HTMLDetailsElement>(null);
-  const [providerQuery, setProviderQuery] = useState("");
-
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       const picker = pickerRef.current;
       if (!picker?.open || !(event.target instanceof Node)) return;
       if (!picker.contains(event.target)) picker.open = false;
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const picker = pickerRef.current;
+      if (event.key !== "Escape" || !picker?.open) return;
+      event.preventDefault();
+      picker.open = false;
+      picker.querySelector<HTMLElement>("summary")?.focus();
+    };
+    const handleFocusIn = (event: FocusEvent) => {
+      const picker = pickerRef.current;
+      if (!picker?.open || !(event.target instanceof Node)) return;
+      if (!picker.contains(event.target)) picker.open = false;
+    };
 
     document.addEventListener("pointerdown", handlePointerDown, true);
-    return () => document.removeEventListener("pointerdown", handlePointerDown, true);
+    document.addEventListener("keydown", handleKeyDown, true);
+    document.addEventListener("focusin", handleFocusIn, true);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("keydown", handleKeyDown, true);
+      document.removeEventListener("focusin", handleFocusIn, true);
+    };
   }, []);
+
+  return pickerRef;
+}
+
+function positionReleaseMenu(picker: HTMLDetailsElement) {
+  const rect = picker.getBoundingClientRect();
+  const viewport = window.visualViewport;
+  const viewportLeft = viewport?.offsetLeft ?? 0;
+  const viewportTop = viewport?.offsetTop ?? 0;
+  const viewportWidth = viewport?.width ?? window.innerWidth;
+  const viewportHeight = viewport?.height ?? window.innerHeight;
+  const width = Math.min(Math.max(rect.width, 142), viewportWidth - 16);
+  const left = Math.max(
+    viewportLeft + 8,
+    Math.min(rect.left, viewportLeft + viewportWidth - width - 8),
+  );
+  const menu = picker.querySelector<HTMLElement>(".release-menu");
+  const menuContentHeight = menu?.scrollHeight ?? 0;
+  const menuHeight = menuContentHeight > 0 ? menuContentHeight + 2 : 194;
+  const spaceBelow = Math.max(32, viewportTop + viewportHeight - rect.bottom - 8);
+  const spaceAbove = Math.max(32, rect.top - viewportTop - 8);
+  const openAbove = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+  const maxHeight = Math.min(menuHeight, openAbove ? spaceAbove : spaceBelow);
+  const top = openAbove
+    ? Math.max(viewportTop + 8, rect.top - maxHeight + 1)
+    : rect.bottom - 1;
+
+  picker.style.setProperty("--release-menu-left", `${left}px`);
+  picker.style.setProperty("--release-menu-top", `${top}px`);
+  picker.style.setProperty("--release-menu-width", `${width}px`);
+  picker.style.setProperty("--release-menu-max-height", `${maxHeight}px`);
+}
+
+function ReleasePicker({ state }: { state: ExplorerState }) {
+  const pickerRef = useDismissibleDetails();
+  const [isOpen, setIsOpen] = useState(false);
+  const options: { value: ReleaseFilter; label: string }[] = [
+    { value: "all", label: "Any date" },
+    { value: "thisYear", label: String(currentYear) },
+    { value: "lastYear", label: String(currentYear - 1) },
+    { value: "last90", label: "Last 90 days" },
+    { value: "last180", label: "Last 180 days" },
+    { value: "undated", label: "No date" },
+  ];
+  const selectedLabel = options.find((option) => option.value === state.releaseFilter)?.label ?? "Any date";
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const picker = pickerRef.current;
+    if (!picker) return;
+    const filterBar = picker.closest(".filter-bar");
+    const updatePosition = () => positionReleaseMenu(picker);
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.visualViewport?.addEventListener("resize", updatePosition);
+    window.visualViewport?.addEventListener("scroll", updatePosition);
+    filterBar?.addEventListener("scroll", updatePosition, { passive: true });
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.visualViewport?.removeEventListener("resize", updatePosition);
+      window.visualViewport?.removeEventListener("scroll", updatePosition);
+      filterBar?.removeEventListener("scroll", updatePosition);
+    };
+  }, [isOpen, pickerRef]);
+
+  const focusMenuItem = (target: "selected" | "first" | "last") => {
+    const picker = pickerRef.current;
+    if (!picker) return;
+    picker.open = true;
+    requestAnimationFrame(() => {
+      const buttons = picker.querySelectorAll<HTMLButtonElement>(".release-menu button");
+      const button =
+        target === "selected"
+          ? picker.querySelector<HTMLButtonElement>(".release-menu button.active")
+          : buttons[target === "first" ? 0 : buttons.length - 1];
+      buttons.forEach((candidate) => {
+        candidate.tabIndex = candidate === button ? 0 : -1;
+      });
+      button?.focus();
+    });
+  };
+
+  const navigateMenu = (
+    button: HTMLButtonElement,
+    key: string,
+    hasModifier: boolean,
+    preventDefault: () => void,
+  ) => {
+    if (hasModifier) return;
+    const buttons = Array.from(
+      pickerRef.current?.querySelectorAll<HTMLButtonElement>(".release-menu button") ?? [],
+    );
+    const currentIndex = buttons.indexOf(button);
+    let nextIndex: number | undefined;
+
+    if (key === "ArrowDown") nextIndex = (currentIndex + 1) % buttons.length;
+    else if (key === "ArrowUp") nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+    else if (key === "Home") nextIndex = 0;
+    else if (key === "End") nextIndex = buttons.length - 1;
+    else if (key.length === 1 && key !== " ") {
+      const query = key.toLowerCase();
+      nextIndex = buttons.findIndex((candidate, index) =>
+        index !== currentIndex && candidate.textContent?.trim().toLowerCase().startsWith(query),
+      );
+      if (nextIndex < 0) nextIndex = undefined;
+    }
+
+    if (nextIndex === undefined) return;
+    preventDefault();
+    const nextButton = buttons[nextIndex];
+    if (!nextButton) return;
+    buttons.forEach((candidate) => {
+      candidate.tabIndex = candidate === nextButton ? 0 : -1;
+    });
+    nextButton.focus();
+  };
+
+  return (
+    <details
+      ref={pickerRef}
+      className="release-picker"
+      onToggle={(event) => {
+        setIsOpen(event.currentTarget.open);
+        if (event.currentTarget.open) positionReleaseMenu(event.currentTarget);
+      }}
+    >
+      <summary
+        className={state.releaseFilter !== "all" ? "active" : ""}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={() => {
+          if (pickerRef.current) positionReleaseMenu(pickerRef.current);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            if (pickerRef.current?.open) pickerRef.current.open = false;
+            else focusMenuItem("selected");
+            return;
+          }
+          if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+          event.preventDefault();
+          focusMenuItem(event.key === "ArrowDown" ? "first" : "last");
+        }}
+      >
+        <span className="release-label">Released</span>
+        <span>{selectedLabel}</span>
+        <CaretDown aria-hidden="true" />
+      </summary>
+      <div className="release-menu" role="menu" aria-label="Release date">
+        {options.map((option) => {
+          const selected = option.value === state.releaseFilter;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="menuitemradio"
+              aria-checked={selected}
+              tabIndex={selected ? 0 : -1}
+              className={selected ? "active" : ""}
+              onKeyDown={(event) =>
+                navigateMenu(
+                  event.currentTarget,
+                  event.key,
+                  event.ctrlKey || event.metaKey || event.altKey,
+                  () => event.preventDefault(),
+                )
+              }
+              onClick={() => {
+                state.setReleaseFilter(option.value);
+                const picker = pickerRef.current;
+                if (!picker) return;
+                picker.open = false;
+                picker.querySelector<HTMLElement>("summary")?.focus();
+              }}
+            >
+              <span>{option.label}</span>
+              {selected ? <Check weight="bold" aria-hidden="true" /> : null}
+            </button>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
+function ProviderPicker({ state }: { state: ExplorerState }) {
+  const pickerRef = useDismissibleDetails();
+  const [providerQuery, setProviderQuery] = useState("");
 
   const filteredProviders = useMemo(() => {
     const term = providerQuery.trim().toLowerCase();

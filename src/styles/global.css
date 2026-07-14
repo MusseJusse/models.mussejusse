@@ -221,7 +221,7 @@ select {
 }
 
 .filter-label,
-.filter-select > span {
+.release-label {
   color: var(--text-tertiary);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-size: 9px;
@@ -247,6 +247,7 @@ select {
 
 .filter-group button,
 .provider-picker > summary,
+.release-picker > summary,
 .reset-button {
   height: 28px;
   padding: 0 9px;
@@ -261,13 +262,15 @@ select {
 
 .filter-group button:hover,
 .provider-picker > summary:hover,
+.release-picker > summary:hover,
 .reset-button:hover {
   border-color: color-mix(in srgb, var(--accent) 70%, var(--border));
   color: var(--text);
 }
 
 .filter-group button.active,
-.provider-picker > summary.active {
+.provider-picker > summary.active,
+.release-picker > summary.active {
   border-color: var(--accent);
   color: var(--accent-text);
   background: var(--accent-soft);
@@ -275,38 +278,109 @@ select {
 
 .filter-group button:active,
 .provider-picker > summary:active,
+.release-picker > summary:active,
 .reset-button:active,
 .provider-menu button:active,
+.release-menu button:active,
 .table-state button:active {
   transform: translateY(1px);
 }
 
-.filter-select {
-  display: grid;
-  height: 28px;
-  grid-template-columns: auto auto auto;
-  align-items: center;
-  gap: 5px;
-  padding: 0 7px;
-  border: 1px solid var(--border);
-  border-radius: 2px;
+.provider-picker,
+.release-picker {
+  flex: 0 0 auto;
 }
 
-.filter-select select {
-  appearance: none;
-  border: 0;
-  outline: 0;
+.provider-picker > summary,
+.release-picker > summary {
+  align-items: center;
+  list-style: none;
+}
+
+.release-picker > summary {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 5px;
+}
+
+.provider-picker > summary::-webkit-details-marker,
+.release-picker > summary::-webkit-details-marker {
+  display: none;
+}
+
+.release-picker > summary > span:not(.release-label) {
   color: var(--text);
-  background: transparent;
+}
+
+.release-picker > summary.active > span:not(.release-label) {
+  color: var(--accent-text);
+}
+
+.provider-picker > summary svg,
+.release-picker > summary svg {
+  width: 10px;
+  height: 10px;
+}
+
+.release-picker > summary svg {
+  color: var(--text-tertiary);
+}
+
+.provider-picker[open] > summary svg,
+.release-picker[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.provider-menu,
+.release-menu {
+  position: fixed;
+  z-index: 50;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--background);
+  box-shadow: 0 14px 40px rgb(0 0 0 / 0.16);
+}
+
+.release-menu {
+  top: var(--release-menu-top);
+  left: var(--release-menu-left);
+  display: grid;
+  width: var(--release-menu-width);
+  max-height: var(--release-menu-max-height);
+  overflow-y: auto;
+}
+
+.release-menu button {
+  display: grid;
+  height: 32px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 9px;
+  border: 0;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+  background: var(--background);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-size: 10px;
+  text-align: left;
   cursor: pointer;
 }
 
-.filter-select > svg {
-  width: 10px;
-  height: 10px;
-  color: var(--text-tertiary);
+.release-menu button:last-child {
+  border-bottom: 0;
+}
+
+.release-menu button:hover,
+.release-menu button.active {
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.release-menu button svg {
+  width: 11px;
+  height: 11px;
 }
 
 .reset-button {
@@ -315,41 +389,15 @@ select {
   background: var(--accent-soft);
 }
 
-.provider-picker {
-  flex: 0 0 auto;
-}
-
 .provider-picker > summary {
   display: flex;
-  align-items: center;
   gap: 6px;
-  list-style: none;
-}
-
-.provider-picker > summary::-webkit-details-marker {
-  display: none;
-}
-
-.provider-picker > summary svg {
-  width: 10px;
-  height: 10px;
-}
-
-.provider-picker[open] > summary svg {
-  transform: rotate(180deg);
 }
 
 .provider-menu {
-  position: fixed;
   top: calc(var(--header-height) + var(--filter-height) - 1px);
   left: 12px;
-  z-index: 50;
   width: min(360px, calc(100vw - 24px));
-  overflow: hidden;
-  border: 1px solid var(--border);
-  color: var(--text);
-  background: var(--background);
-  box-shadow: 0 14px 40px rgb(0 0 0 / 0.16);
   transform-origin: top left;
 }
 
@@ -747,6 +795,8 @@ button.header-cell:hover,
 @media (hover: hover) and (pointer: fine) {
   .filter-group button,
   .provider-picker > summary,
+  .release-picker > summary,
+  .release-menu button,
   .reset-button,
   .id-cell button {
     transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease;
