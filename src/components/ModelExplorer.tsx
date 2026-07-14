@@ -73,6 +73,7 @@ type ExplorerState = {
   setQuery: (value: string) => void;
   toggleProvider: (value: string) => void;
   selectAllProviders: () => void;
+  selectFrontierProviders: () => void;
   clearProviders: () => void;
   setCapability: (value: string) => void;
   setWeights: (value: string) => void;
@@ -114,6 +115,7 @@ const weightsMasks = {
 } as const;
 
 const defaultProviderNames = ["OpenAI", "Anthropic", "Google", "Z.AI"];
+const FRONTIER_PROVIDERS = ["OpenAI", "Google", "Anthropic", "Z.AI", "xAI"] as const;
 const currentYear = new Date().getFullYear();
 const nowTime = Date.now();
 const dayMs = 24 * 60 * 60 * 1000;
@@ -197,6 +199,8 @@ function useModelData(): ExplorerState {
         return next;
       }),
     selectAllProviders: () => setSelectedProviders(new Set(index.providers)),
+    selectFrontierProviders: () =>
+      setSelectedProviders(new Set(FRONTIER_PROVIDERS.filter((provider) => index.providers.includes(provider)))),
     clearProviders: () => setSelectedProviders(new Set()),
     setCapability,
     setWeights,
@@ -840,8 +844,9 @@ function ProviderPicker({ state, field, dark }: { state: ExplorerState; field: s
         <span className="min-w-0 flex-1 truncate">{label}</span>
       </summary>
       <div className={`absolute z-30 mt-2 max-h-80 w-72 overflow-auto rounded-md border-2 border-[#23170f] p-2 shadow-[5px_5px_0_#23170f] ${dark ? "bg-[#fffaf0] text-[#23170f]" : "bg-white"}`}>
-        <div className="mb-2 grid grid-cols-2 gap-2">
+        <div className="mb-2 grid grid-cols-3 gap-2">
           <button type="button" className="rounded-md border border-[#23170f] px-2 py-1 text-xs font-black" onClick={state.selectAllProviders}>All</button>
+          <button type="button" className="rounded-md border border-[#23170f] px-2 py-1 text-xs font-black" onClick={state.selectFrontierProviders}>Frontier labs</button>
           <button type="button" className="rounded-md border border-[#23170f] px-2 py-1 text-xs font-black" onClick={state.clearProviders}>Clear</button>
         </div>
         <div className="grid gap-1">
