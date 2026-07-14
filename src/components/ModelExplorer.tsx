@@ -53,7 +53,7 @@ type ModelIndex = {
   sortedIds: Record<SortKey, Uint32Array>;
 };
 
-type SortKey = "updated" | "context" | "inputCost" | "outputCost" | "providerName" | "name";
+type SortKey = "release" | "updated" | "context" | "inputCost" | "outputCost" | "providerName" | "name";
 type ReleaseFilter = "all" | "thisYear" | "lastYear" | "last90" | "last180" | "undated";
 
 type ExplorerState = {
@@ -90,6 +90,7 @@ const EMPTY_INDEX: ModelIndex = {
   providers: [],
   stats: EMPTY_STATS,
   sortedIds: {
+    release: new Uint32Array(),
     updated: new Uint32Array(),
     context: new Uint32Array(),
     inputCost: new Uint32Array(),
@@ -133,7 +134,7 @@ function useModelData(): ExplorerState {
   const [capability, setCapability] = useState("all");
   const [weights, setWeights] = useState("all");
   const [releaseFilter, setReleaseFilter] = useState<ReleaseFilter>("all");
-  const [sort, setSort] = useState<SortKey>("updated");
+  const [sort, setSort] = useState<SortKey>("release");
   const [error, setError] = useState("");
   const deferredQuery = useDeferredValue(query);
 
@@ -268,6 +269,7 @@ function buildModelIndex(data: Record<string, ApiProvider>): ModelIndex {
     providers: [...providerSet].sort((a, b) => a.localeCompare(b)),
     stats: { providers: providerSet.size, models: rows.length, reasoning, open, tools },
     sortedIds: {
+      release: toTypedIds([...ids].sort((a, b) => rows[b].releaseTime - rows[a].releaseTime)),
       updated: toTypedIds([...ids].sort((a, b) => rows[b].updatedTime - rows[a].updatedTime)),
       context: toTypedIds([...ids].sort((a, b) => rows[b].contextLimit - rows[a].contextLimit)),
       inputCost: toTypedIds([...ids].sort((a, b) => rows[a].inputCost - rows[b].inputCost)),
@@ -816,7 +818,7 @@ function Controls({ state, skin }: { state: ExplorerState; skin: "paper" | "reta
       <ControlSelect icon={<ListFilter size={15} />} value={state.capability} onChange={state.setCapability} options={[["all", "All capabilities"], ["reasoning", "Reasoning"], ["tools", "Tool calling"], ["vision", "Vision / files"]]} field={field} />
       <ControlSelect icon={<ShieldCheck size={15} />} value={state.weights} onChange={state.setWeights} options={[["all", "All weights"], ["open", "Open weights"], ["closed", "Closed weights"]]} field={field} />
       <ControlSelect icon={<Sparkles size={15} />} value={state.releaseFilter} onChange={(value) => state.setReleaseFilter(value as ReleaseFilter)} options={[["all", "Any release date"], ["thisYear", `Released ${currentYear}`], ["lastYear", `Released ${currentYear - 1}`], ["last90", "Released last 90d"], ["last180", "Released last 180d"], ["undated", "No release date"]]} field={field} />
-      <ControlSelect icon={<ArrowDownUp size={15} />} value={state.sort} onChange={(value) => state.setSort(value as SortKey)} options={[["updated", "Recently updated"], ["context", "Largest context"], ["inputCost", "Lowest input cost"], ["outputCost", "Lowest output cost"], ["providerName", "Provider A-Z"], ["name", "Model A-Z"]]} field={field} />
+      <ControlSelect icon={<ArrowDownUp size={15} />} value={state.sort} onChange={(value) => state.setSort(value as SortKey)} options={[["release", "Newest release"], ["updated", "Recently updated"], ["context", "Largest context"], ["inputCost", "Lowest input cost"], ["outputCost", "Lowest output cost"], ["providerName", "Provider A-Z"], ["name", "Model A-Z"]]} field={field} />
       <p className={`text-xs ${dark ? "text-white/55" : "text-black/55"}`}>
         {state.visible.length.toLocaleString()} shown · {state.filteredCount.toLocaleString()} matches{state.query !== state.deferredQuery ? " · searching" : ""}
       </p>
