@@ -9,7 +9,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check",
+    "test": "tsx --test src/lib/models.test.ts"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.4",
@@ -20,8 +22,12 @@
     "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@tailwindcss/vite": "^4.2.4",
+    "@types/node": "^22.20.2",
     "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.3"
   }
 }
