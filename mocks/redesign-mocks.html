@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>models.mussejusse redesign mocks</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #000;
+    --panel: #0c0c0c;
+    --line: #232323;
+    --line-soft: #1a1a1a;
+    --fg: #fff;
+    --fg-2: #a3a3a3;
+    --fg-3: #6f6f6f;
+    --accent: #7fd4a8;
+    --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0 20px 80px;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.6 "Aptos", "Segoe UI", system-ui, -apple-system, sans-serif;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: var(--accent); }
+  header.doc { max-width: 1240px; margin: 0 auto; padding: 48px 0 8px; }
+  header.doc h1 { margin: 0 0 10px; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  header.doc p { margin: 0; max-width: 70ch; color: var(--fg-2); }
+  header.doc p + p { margin-top: 8px; }
+
+  .variant { max-width: 1240px; margin: 0 auto; padding-top: 56px; border-top: 1px solid var(--line-soft); }
+  .variant > h2 { margin: 0 0 4px; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .variant > h2 span { color: var(--fg-3); font-family: var(--mono); font-weight: 400; margin-right: 10px; }
+  .variant > .why { margin: 0 0 20px; max-width: 76ch; color: var(--fg-2); font-size: 13px; }
+  .variant > .notes { margin: 14px 0 0; padding: 0; list-style: none; color: var(--fg-3); font-size: 12px; }
+  .variant > .notes li { padding: 2px 0; }
+  .variant > .notes li::before { content: "- "; color: var(--fg-3); }
+
+  .frames { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+  figure.frame { margin: 0; flex: 1 1 560px; min-width: 0; }
+  figure.frame.mobile { flex: 0 1 340px; }
+  figure.frame figcaption {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--fg-3); padding-bottom: 8px;
+  }
+  .screen {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--panel);
+  }
+  figure.frame.mobile .screen { border-radius: 22px; border-width: 2px; }
+
+  /* ---------- shared mock primitives ---------- */
+  .m { font-size: 12px; }
+  .m, .m * { box-sizing: border-box; }
+  .m-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
+  .m-title { font-weight: 700; font-size: 11px; letter-spacing: 0.02em; text-transform: uppercase; }
+  .m-sub { color: var(--fg-3); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-search {
+    flex: 1; display: flex; align-items: center; gap: 7px;
+    border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px;
+    color: var(--fg-3); font-size: 11px; min-width: 0;
+  }
+  .m-search kbd {
+    margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--fg-3);
+    border: 1px solid var(--line); border-radius: 3px; padding: 0 4px;
+  }
+  .m-chips { display: flex; gap: 6px; padding: 8px 14px; border-bottom: 1px solid var(--line-soft); overflow: hidden; }
+  .m-chip {
+    flex: 0 0 auto; font-family: var(--mono); font-size: 9px; letter-spacing: 0.04em;
+    border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; color: var(--fg-2);
+    white-space: nowrap;
+  }
+  .m-chip.on { border-color: #2e5c44; background: #10241a; color: var(--accent); }
+  .m-status {
+    display: flex; gap: 14px; padding: 5px 14px; border-bottom: 1px solid var(--line-soft);
+    color: var(--fg-3); font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .m-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line-soft); }
+  .m-row.hl { background: #101915; }
+  .m-dot { width: 14px; height: 14px; border-radius: 4px; flex: 0 0 auto; }
+  .d-openai { background: #fff; }
+  .d-anthropic { background: #d97757; }
+  .d-google { background: #5b8def; }
+  .d-deepseek { background: #4d6bfe; }
+  .d-xai { background: #ddd; }
+  .d-alibaba { background: #ff6a00; }
+  .d-moonshot { background: #111; border: 1px solid #444; }
+  .m-name { color: var(--fg); font-weight: 600; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-id { font-family: var(--mono); font-size: 10px; color: var(--fg-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m-num { font-family: var(--mono); font-size: 11px; color: var(--fg-2); }
+  .m-cap { display: inline-grid; place-items: center; width: 16px; height: 16px; border: 1px solid var(--line); border-radius: 4px; color: var(--fg-2); font-size: 9px; font-family: var(--mono); }
+  .m-pill { font-family: var(--mono); font-size: 9px; border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; color: var(--fg-2); white-space: nowrap; }
+  .m-pill.open { border-color: #2e5c44; color: var(--accent); }
+  .m-th { font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .m-th.sorted { color: var(--accent); }
+  .m-td { padding: 8px 10px; border-bottom: 1px solid var(--line-soft); font-size: 11px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .m-table code { font-family: var(--mono); font-size: 10px; color: var(--fg-3); }
+  .m-table .strong { color: var(--fg); font-weight: 600; }
+
+  /* light theme mocks */
+  .light { background: #fbfcfa; color: #183026; }
+  .light .m-head, .light .m-row, .light .m-chips, .light .m-status, .light .m-td, .light .m-cell, .light .m-sheet, .light .m-accordion, .light .m-detail { border-color: #e2e8e3; }
+  .light .m-search, .light .m-chip, .light .m-cap, .light .m-pill { border-color: #d5ddd7; }
+  .light .m-chip.on { background: #e8f2ec; border-color: #347858; color: #1b5239; }
+  .light .m-sub, .light .m-status, .light .m-th, .light .m-id, .light .m-num, .light .m-td, .light .m-3 { color: #8b9992; }
+  .light .m-name, .light .strong { color: #183026; }
+  .light .m-search { color: #8b9992; background: #fff; }
+  .light .m-row.hl { background: #f2f7f3; }
+  .light .m-table code { color: #8b9992; }
+  .light .m-fab { background: #183026; color: #fff; }
+
+  /* ---------- A ---------- */
+  .a-card { padding: 11px 14px; border-bottom: 1px solid var(--line-soft); }
+  .a-top { display: flex; align-items: center; gap: 8px; }
+  .a-top .m-name { flex: 1; min-width: 0; }
+  .a-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 12px; margin-top: 8px; }
+  .a-kv { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .a-kv small { font-family: var(--mono); font-size: 8px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); }
+  .a-kv span { font-family: var(--mono); font-size: 11px; color: var(--fg-2); }
+  .a-foot { display: flex; gap: 5px; margin-top: 9px; align-items: center; }
+
+  /* ---------- B ---------- */
+  .b-pin { position: relative; }
+  .b-scroll { overflow: hidden; }
+
+  /* ---------- C ---------- */
+  .c-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: #101010; border-top: 1px solid var(--line);
+    border-radius: 16px 16px 0 0; padding: 10px 16px 14px;
+  }
+  .light .c-sheet { background: #fff; }
+  .c-grab { width: 34px; height: 4px; border-radius: 2px; background: #333; margin: 0 auto 10px; }
+  .light .c-grab { background: #d5ddd7; }
+  .c-seg { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin-top: 10px; }
+  .c-seg span { flex: 1; text-align: center; font-family: var(--mono); font-size: 9px; padding: 6px 0; color: var(--fg-2); border-right: 1px solid var(--line); }
+  .c-seg span:last-child { border-right: 0; }
+  .c-seg span.on { background: #10241a; color: var(--accent); }
+  .light .c-seg span.on { background: #e8f2ec; color: #1b5239; }
+  .c-check { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-size: 12px; }
+  .c-box { width: 15px; height: 15px; border: 1px solid var(--line); border-radius: 4px; display: grid; place-items: center; color: var(--accent); font-size: 10px; flex: 0 0 auto; }
+  .c-box.on { border-color: #2e5c44; background: #10241a; }
+  .light .c-box { border-color: #d5ddd7; }
+  .light .c-box.on { border-color: #347858; background: #e8f2ec; color: #1b5239; }
+  .c-apply { margin-top: 12px; text-align: center; background: #2e5c44; color: #fff; font-size: 12px; font-weight: 600; border-radius: 7px; padding: 9px 0; }
+  .light .c-apply { background: #1b5239; }
+  .c-fab {
+    position: absolute; right: 12px; bottom: 12px;
+    border: 1px solid #2e5c44; background: #10241a; color: var(--accent);
+    font-family: var(--mono); font-size: 10px; border-radius: 999px; padding: 8px 12px;
+  }
+  .light .c-fab { border-color: #347858; background: #e8f2ec; color: #1b5239; }
+  .c-dim { position: absolute; inset: 0; background: rgb(0 0 0 / 0.45); }
+  .light .c-dim { background: rgb(24 48 38 / 0.25); }
+  .c-stage { position: relative; overflow: hidden; }
+
+  /* ---------- D ---------- */
+  .d-hero { padding: 34px 24px 24px; text-align: center; border-bottom: 1px solid var(--line-soft); }
+  .d-hero .m-search { max-width: 420px; margin: 0 auto; padding: 9px 12px; font-size: 12px; }
+  .d-hero .hint { margin-top: 10px; font-family: var(--mono); font-size: 9px; color: var(--fg-3); letter-spacing: 0.05em; }
+  .d-group { padding: 6px 14px 2px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); border-bottom: 1px solid var(--line-soft); padding-bottom: 6px; }
+
+  /* ---------- E ---------- */
+  .e-split { display: grid; grid-template-columns: 1.6fr 1fr; }
+  .e-detail { border-left: 1px solid var(--line-soft); padding: 12px 14px; }
+  .e-kv { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line-soft); font-size: 11px; }
+  .e-kv span:first-child { color: var(--fg-3); }
+  .e-kv span:last-child { font-family: var(--mono); color: var(--fg-2); }
+  .e-bar { height: 4px; border-radius: 2px; background: #1a2a21; margin-top: 3px; overflow: hidden; }
+  .e-bar i { display: block; height: 100%; background: var(--accent); }
+  .e-acc { border-bottom: 1px solid var(--line-soft); }
+  .e-acc-body { padding: 4px 14px 12px 38px; }
+  .e-chev { margin-left: auto; color: var(--fg-3); font-family: var(--mono); font-size: 11px; }
+
+  footer.doc { max-width: 1240px; margin: 64px auto 0; padding-top: 20px; border-top: 1px solid var(--line-soft); color: var(--fg-3); font-size: 12px; }
+
+  @media (max-width: 640px) {
+    body { padding: 0 12px 60px; }
+    figure.frame.mobile { flex: 1 1 auto; }
+    .e-split { grid-template-columns: 1fr; }
+    .e-detail { border-left: 0; border-top: 1px solid var(--line-soft); }
+  }
+</style>
+</head>
+<body>
+
+<header class="doc">
+  <h1>Model catalog redesigns, five directions</h1>
+  <p>The current catalog is a 10-column data grid. On desktop it works. On a phone the grid keeps its 1,535px fixed width and the user pans sideways through a forest of borders. These mocks fix that and tighten the desktop UI along the way.</p>
+  <p>Every direction shows the same five sample rows in a desktop frame and a mobile frame. Sample data mirrors the real catalog: model, provider, context limit, input and output price per 1M tokens, capabilities, weights.</p>
+</header>
+
+<!-- ============ A ============ -->
+<section class="variant">
+  <h2><span>A</span>Cards on mobile, table on desktop</h2>
+  <p class="why">The direct fix. Desktop keeps a table but drops the vertical cell borders, which is most of the visual noise. Below 720px the same data reflows into cards: name and ID on top, a three-column stat grid, capability pills at the bottom. No horizontal scrolling anywhere.</p>
+  <div class="frames">
+    <figure class="frame">
+      <figcaption>Desktop, 1280px</figcaption>
+      <div class="screen m light">
+        <div class="m-head">
+          <span class="m-title">models</span>
+          <span class="m-sub">612 AI models</span>
+          <span class="m-search" style="max-width:280px;">Search models <kbd>/</kbd></span>
+        </div>
+        <div class="m-chips">
+          <span class="m-chip on">Frontier labs</span>
+          <span class="m-chip">Released: any date</span>
+          <span class="m-chip">Reset</span>
+        </div>
+        <div class="m-status"><span>612 selected</span><span>8 / 43 providers</span><span>sort: release date, desc</span></div>
+        <table class="m-table">
+          <thead><tr>
+            <th class="m-th sorted">Provider ↓</th><th class="m-th">Model</th><th class="m-th">Context</th>
+            <th class="m-th">In / 1M</th><th class="m-th">Out / 1M</th><th class="m-th">Caps</th><th class="m-th">Weights</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="m-td"><span class="strong">OpenAI</span></td><td class="m-td strong">GPT-5.2</td><td class="m-td">400K</td><td class="m-td">$1.25</td><td class="m-td">$10.00</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td><td class="m-td">Closed</td></tr>
+            <tr><td class="m-td"><span class="strong">Anthropic</span></td><td class="m-td strong">Claude Sonnet 4.6</td><td class="m-td">200K</td><td class="m-td">$3.00</td><td class="m-td">$15.00</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td><td class="m-td">Closed</td></tr>
+            <tr><td class="m-td"><span class="strong">Google</span></td><td class="m-td strong">Gemini 3 Pro</td><td class="m-td">1M</td><td class="m-td">$1.25</td><td class="m-td">$10.00</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td><td class="m-td">Closed</td></tr>
+            <tr><td class="m-td"><span class="strong">DeepSeek</span></td><td class="m-td strong">DeepSeek V3.2</td><td class="m-td">128K</td><td class="m-td">$0.28</td><td class="m-td">$0.42</td><td class="m-td"><span class="m-cap">T</span></td><td class="m-td"><span class="m-pill open">Open</span></td></tr>
+            <tr><td class="m-td"><span class="strong">xAI</span></td><td class="m-td strong">Grok 4</td><td class="m-td">256K</td><td class="m-td">$3.00</td><td class="m-td">$15.00</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td><td class="m-td">Closed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </figure>
+    <figure class="frame mobile">
+      <figcaption>Mobile, 390px</figcaption>
+      <div class="screen m light">
+        <div class="m-head">
+          <span class="m-title">models</span>
+          <span class="m-sub" style="margin-left:auto;">612 models</span>
+        </div>
+        <div class="m-search" style="margin:10px 14px 0;">Search models</div>
+        <div class="m-chips">
+          <span class="m-chip on">Frontier labs</span>
+          <span class="m-chip">Any date</span>
+          <span class="m-chip">Reset</span>
+        </div>
+        <div class="a-card">
+          <div class="a-top"><span class="m-dot d-openai"></span><span class="m-name">GPT-5.2</span><span class="m-num">$10.00 out</span></div>
+          <div class="m-id">openai/gpt-5.2</div>
+          <div class="a-grid">
+            <div class="a-kv"><small>Context</small><span>400K</span></div>
+            <div class="a-kv"><small>In / 1M</small><span>$1.25</span></div>
+            <div class="a-kv"><small>Out / 1M</small><span>$10.00</span></div>
+          </div>
+          <div class="a-foot"><span class="m-cap">R</span><span class="m-cap">T</span><span class="m-cap">V</span><span class="m-pill" style="margin-left:auto;">Closed</span></div>
+        </div>
+        <div class="a-card">
+          <div class="a-top"><span class="m-dot d-anthropic"></span><span class="m-name">Claude Sonnet 4.6</span><span class="m-num">$15.00 out</span></div>
+          <div class="m-id">anthropic/claude-sonnet-4-6</div>
+          <div class="a-grid">
+            <div class="a-kv"><small>Context</small><span>200K</span></div>
+            <div class="a-kv"><small>In / 1M</small><span>$3.00</span></div>
+            <div class="a-kv"><small>Out / 1M</small><span>$15.00</span></div>
+          </div>
+          <div class="a-foot"><span class="m-cap">R</span><span class="m-cap">T</span><span class="m-cap">V</span><span class="m-pill" style="margin-left:auto;">Closed</span></div>
+        </div>
+        <div class="a-card">
+          <div class="a-top"><span class="m-dot d-google"></span><span class="m-name">Gemini 3 Pro</span><span class="m-num">$10.00 out</span></div>
+          <div class="m-id">google/gemini-3-pro</div>
+          <div class="a-grid">
+            <div class="a-kv"><small>Context</small><span>1M</span></div>
+            <div class="a-kv"><small>In / 1M</small><span>$1.25</span></div>
+            <div class="a-kv"><small>Out / 1M</small><span>$10.00</span></div>
+          </div>
+          <div class="a-foot"><span class="m-cap">R</span><span class="m-cap">T</span><span class="m-cap">V</span><span class="m-pill" style="margin-left:auto;">Closed</span></div>
+        </div>
+      </div>
+    </figure>
+  </div>
+  <ul class="notes">
+    <li>Cost per 1M moves next to the model name on mobile because price is the second thing people scan after the name.</li>
+    <li>Capability icons keep their tooltips; on touch they become a legend row under the filter chips.</li>
+    <li>Cheapest change to ship: one CSS container query and a second row layout, no new components.</li>
+  </ul>
+</section>
+
+<!-- ============ B ============ -->
+<section class="variant">
+  <h2><span>B</span>Keep the table, cut the columns</h2>
+  <p class="why">For people who want a table on mobile too. The fixed 10-column grid becomes a two-zone layout: the model column stays pinned to the left while the value columns scroll under it. On phones the grid drops to the four columns that carry decisions: model, context, input, output. Release date, updated, and capabilities move to the detail view.</p>
+  <div class="frames">
+    <figure class="frame">
+      <figcaption>Desktop, 1280px</figcaption>
+      <div class="screen m">
+        <div class="m-head">
+          <span class="m-title">models</span>
+          <span class="m-sub">612 AI models</span>
+          <span class="m-search" style="max-width:280px;">Search models <kbd>⌘K</kbd></span>
+        </div>
+        <div class="m-chips">
+          <span class="m-chip on">Frontier labs</span>
+          <span class="m-chip">Last 90 days</span>
+        </div>
+        <table class="m-table">
+          <thead><tr>
+            <th class="m-th sorted">Model ↓</th><th class="m-th">Provider</th><th class="m-th">Context</th>
+            <th class="m-th">In / 1M</th><th class="m-th">Out / 1M</th><th class="m-th">Released</th><th class="m-th">Caps</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="m-td strong">Gemini 3 Pro</td><td class="m-td">Google</td><td class="m-td">1M</td><td class="m-td">$1.25</td><td class="m-td">$10.00</td><td class="m-td">2026-06-10</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td></tr>
+            <tr><td class="m-td strong">GPT-5.2</td><td class="m-td">OpenAI</td><td class="m-td">400K</td><td class="m-td">$1.25</td><td class="m-td">$10.00</td><td class="m-td">2026-05-28</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td></tr>
+            <tr><td class="m-td strong">Grok 4</td><td class="m-td">xAI</td><td class="m-td">256K</td><td class="m-td">$3.00</td><td class="m-td">$15.00</td><td class="m-td">2026-04-22</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td></tr>
+            <tr><td class="m-td strong">Claude Sonnet 4.6</td><td class="m-td">Anthropic</td><td class="m-td">200K</td><td class="m-td">$3.00</td><td class="m-td">$15.00</td><td class="m-td">2026-04-02</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td></tr>
+            <tr><td class="m-td strong">DeepSeek V3.2</td><td class="m-td">DeepSeek</td><td class="m-td">128K</td><td class="m-td">$0.28</td><td class="m-td">$0.42</td><td class="m-td">2026-03-19</td><td class="m-td"><span class="m-cap">T</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </figure>
+    <figure class="frame mobile">
+      <figcaption>Mobile, 390px, scrolled right</figcaption>
+      <div class="screen m">
+        <div class="m-head">
+          <span class="m-title">models</span>
+          <span class="m-search" style="max-width:150px;margin-left:auto;">Search</span>
+        </div>
+        <div class="m-chips">
+          <span class="m-chip on">Frontier labs</span>
+          <span class="m-chip">Last 90 days</span>
+        </div>
+        <div class="m-status"><span>37 models</span><span>sort: release ↓</span></div>
+        <div class="b-pin">
+          <div class="b-scroll" style="display:grid;grid-template-columns:120px 1fr;">
+            <div>
+              <div class="m-th sorted" style="position:sticky;top:0;background:#0c0c0c;">Model ↓</div>
+              <div class="m-td strong">Gemini 3 Pro</div>
+              <div class="m-td strong">GPT-5.2</div>
+              <div class="m-td strong">Grok 4</div>
+              <div class="m-td strong">Claude Sonnet 4.6</div>
+              <div class="m-td strong">DeepSeek V3.2</div>
+            </div>
+            <div style="overflow:hidden;">
+              <div style="display:grid;grid-template-columns:70px 70px 70px;min-width:210px;">
+                <div class="m-th">Ctx</div><div class="m-th">In</div><div class="m-th">Out</div>
+                <div class="m-td">1M</div><div class="m-td">$1.25</div><div class="m-td">$10.00</div>
+                <div class="m-td">400K</div><div class="m-td">$1.25</div><div class="m-td">$10.00</div>
+                <div class="m-td">256K</div><div class="m-td">$3.00</div><div class="m-td">$15.00</div>
+                <div class="m-td">200K</div><div class="m-td">$3.00</div><div class="m-td">$15.00</div>
+                <div class="m-td">128K</div><div class="m-td">$0.28</div><div class="m-td">$0.42</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:8px 14px;color:#6f6f6f;font-family:var(--mono);font-size:9px;">swipe columns for released, caps, weights →</div>
+      </div>
+    </figure>
+  </div>
+  <ul class="notes">
+    <li>Two-zone scroll: name column sticky with a hard right edge and shadow, value columns pan under it.</li>
+    <li>Row height drops to 44px on mobile so five rows fit where two fit today.</li>
+    <li>Model ID and copy button live in the row detail, not in the grid. IDs are for machines; the name is for people.</li>
+  </ul>
+</section>
+
+<!-- ============ C ============ -->
+<section class="variant">
+  <h2><span>C</span>Bottom sheet filters</h2>
+  <p class="why">The provider picker is the worst mobile offender: a dropdown anchored to a 56px header, holding 43 checkboxes in a 360px menu. This direction collapses all filters into one pill row and opens them in a bottom sheet with a segmented release control, provider checkboxes, and a sticky apply button. The sheet is swipe-to-dismissable with momentum.</p>
+  <div class="frames">
+    <figure class="frame">
+      <figcaption>Desktop, 1280px</figcaption>
+      <div class="screen m light">
+        <div class="m-head">
+          <span class="m-title">models</span>
+          <span class="m-sub">612 AI models</span>
+          <span class="m-search" style="max-width:280px;">Search models <kbd>/</kbd></span>
+        </div>
+        <div class="m-chips">
+          <span class="m-chip on">8 providers</span>
+          <span class="m-chip on">Last 90 days</span>
+          <span class="m-chip">Reset</span>
+        </div>
+        <table class="m-table">
+          <thead><tr>
+            <th class="m-th">Provider</th><th class="m-th sorted">Model ↓</th><th class="m-th">Context</th>
+            <th class="m-th">In / 1M</th><th class="m-th">Out / 1M</th><th class="m-th">Caps</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="m-td"><span class="strong">Google</span></td><td class="m-td strong">Gemini 3 Pro</td><td class="m-td">1M</td><td class="m-td">$1.25</td><td class="m-td">$10.00</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td></tr>
+            <tr><td class="m-td"><span class="strong">OpenAI</span></td><td class="m-td strong">GPT-5.2</td><td class="m-td">400K</td><td class="m-td">$1.25</td><td class="m-td">$10.00</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td></tr>
+            <tr><td class="m-td"><span class="strong">xAI</span></td><td class="m-td strong">Grok 4</td><td class="m-td">256K</td><td class="m-td">$3.00</td><td class="m-td">$15.00</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td></tr>
+            <tr><td class="m-td"><span class="strong">Anthropic</span></td><td class="m-td strong">Claude Sonnet 4.6</td><td class="m-td">200K</td><td class="m-td">$3.00</td><td class="m-td">$15.00</td><td class="m-td"><span class="m-cap">R</span> <span class="m-cap">T</span> <span class="m-cap">V</span></td></tr>
+            <tr><td class="m-td"><span class="strong">DeepSeek</span></td><td class="m-td strong">DeepSeek V3.2</td><td class="m-td">128K</td><td class="m-td">$0.28</td><td class="m-td">$0.42</td><td class="m-td"><span class="m-cap">T</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </figure>
+    <figure class="frame mobile">
+      <figcaption>Mobile, list state</figcaption>
+      <div class="screen m light c-stage" style="min-height:430px;">
+        <div class="m-head">
+          <span class="m-title">models</span>
+          <span class="m-sub" style="margin-left:auto;">612 models</span>
+        </div>
+        <div class="m-search" style="margin:10px 14px 0;">Search models</div>
+        <div class="m-chips">
+          <span class="m-chip on">Filters 2</span>
+          <span class="m-chip">Sort: release</span>
+        </div>
+        <div class="m-row"><span class="m-dot d-google"></span><span class="m-name">Gemini 3 Pro</span><span class="m-num" style="margin-left:auto;">$10.00</span></div>
+        <div class="m-row"><span class="m-dot d-openai"></span><span class="m-name">GPT-5.2</span><span class="m-num" style="margin-left:auto;">$10.00</span></div>
+        <div class="m-row"><span class="m-dot d-xai"></span><span class="m-name">Grok 4</span><span class="m-num" style="margin-left:auto;">$15.00</span></div>
+        <div class="m-row"><span class="m-dot d-anthropic"></span><span class="m-name">Claude Sonnet 4.6</span><span class="m-num" style="margin-left:auto;">$15.00</span></div>
+        <div class="m-row"><span class="m-dot d-deepseek"></span><span class="m-name">DeepSeek V3.2</span><span class="m-num" style="margin-left:auto;">$0.42</span></div>
+        <div class="m-row"><span class="m-dot d-alibaba"></span><span class="m-name">Qwen3 235B</span><span class="m-num" style="margin-left:auto;">$0.20</span></div>
+        <div class="m-fab">Filters · 2</div>
+      </div>
+    </figure>
+    <figure class="frame mobile">
+      <figcaption>Mobile, sheet open</figcaption>
+      <div class="screen m light c-stage" style="min-height:430px;">
+        <div class="m-head">
+          <span class="m-title">models</span>
+        </div>
+        <div class="m-row"><span class="m-dot d-google"></span><span class="m-name">Gemini 3 Pro</span><span class="m-num" style="margin-left:auto;">$10.00</span></div>
+        <div class="m-row"><span class="m-dot d-openai"></span><span class="m-name">GPT-5.2</span><span class="m-num" style="margin-left:auto;">$10.00</span></div>
+        <div class="c-dim"></div>
+        <div class="c-sheet">
+          <div class="c-grab"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <strong style="font-size:13px;">Filters</strong>
+            <span style="font-family:var(--mono);font-size:10px;color:#8b9992;">37 results</span>
+          </div>
+          <div class="c-seg">
+            <span>Any</span><span class="on">90d</span><span>180d</span><span>2026</span><span>2025</span>
+          </div>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#8b9992;">Providers</div>
+          <div class="c-check"><span class="c-box on">✓</span><span>OpenAI</span></div>
+          <div class="c-check"><span class="c-box on">✓</span><span>Anthropic</span></div>
+          <div class="c-check"><span class="c-box on">✓</span><span>Google</span></div>
+          <div class="c-check"><span class="c-box">✓</span><span>DeepSeek</span></div>
+          <div class="c-check"><span class="c-box">✓</span><span>xAI</span></div>
+          <div class="c-apply">Show 37 models</div>
+        </div>
+      </div>
+    </figure>
+  </div>
+  <ul class="notes">
+    <li>The apply button states the result count, so users see the effect before committing.</li>
+    <li>Release ranges become a segmented control. Six radio rows become one glanceable row.</li>
+    <li>Desktop keeps the current dropdown pickers. Only mobile gets the sheet.</li>
+  </ul>
+</section>
+
+<!-- ============ D ============ -->
+<section class="variant">
+  <h2><span>D</span>Search-first, keyboard led</h2>
+  <p class="why">Most sessions here start with a model name in mind. This direction makes search the page: a large query field, results grouped by provider, and filters as a single sort chip. Mobile gets a full-screen search view with the on-screen keyboard accounted for: results start at the top of the viewport and the list thins to essentials.</p>
+  <div class="frames">
+    <figure class="frame">
+      <figcaption>Desktop, 1280px</figcaption>
+      <div class="screen m">
+        <div class="m-head">
+          <span class="m-title">models</span>
+          <span class="m-sub">612 AI models</span>
+        </div>
+        <div class="d-hero">
+          <div class="m-search">Search 612 models by name, provider, or ID <kbd>⌘K</kbd></div>
+          <div class="hint">/ focus · enter copy id · tab switch sort</div>
+        </div>
+        <div class="m-status"><span>612 results</span><span>sorted: release ↓</span><span>change</span></div>
+        <div class="d-group">Google</div>
+        <div class="m-row"><span class="m-dot d-google"></span><span><span class="m-name">Gemini 3 Pro</span><br><span class="m-id">google/gemini-3-pro</span></span><span class="m-num" style="margin-left:auto;">1M · $1.25 / $10.00</span></div>
+        <div class="d-group">OpenAI</div>
+        <div class="m-row"><span class="m-dot d-openai"></span><span><span class="m-name">GPT-5.2</span><br><span class="m-id">openai/gpt-5.2</span></span><span class="m-num" style="margin-left:auto;">400K · $1.25 / $10.00</span></div>
+        <div class="d-group">Anthropic</div>
+        <div class="m-row"><span class="m-dot d-anthropic"></span><span><span class="m-name">Claude Sonnet 4.6</span><br><span class="m-id">anthropic/claude-sonnet-4-6</span></span><span class="m-num" style="margin-left:auto;">200K · $3.00 / $15.00</span></div>
+        <div class="d-group">DeepSeek</div>
+        <div class="m-row"><span class="m-dot d-deepseek"></span><span><span class="m-name">DeepSeek V3.2</span><br><span class="m-id">deepseek/deepseek-v3.2</span></span><span class="m-num" style="margin-left:auto;">128K · $0.28 / $0.42 <span class="m-pill open">Open</span></span></div>
+      </div>
+    </figure>
+    <figure class="frame mobile">
+      <figcaption>Mobile, 390px</figcaption>
+      <div class="screen m" style="min-height:430px;">
+        <div class="m-head">
+          <span class="m-title">models</span>
+          <span class="m-sub" style="margin-left:auto;">612 models</span>
+        </div>
+        <div class="m-search" style="margin:10px 14px;">gemini|</div>
+        <div class="m-status"><span>4 results for "gemini"</span></div>
+        <div class="d-group">Google</div>
+        <div class="m-row"><span class="m-dot d-google"></span><span style="min-width:0;"><span class="m-name">Gemini 3 Pro</span><br><span class="m-id">google/gemini-3-pro</span></span></div>
+        <div class="m-row"><span class="m-dot d-google"></span><span style="min-width:0;"><span class="m-name">Gemini 3 Flash</span><br><span class="m-id">google/gemini-3-flash</span></span></div>
+        <div class="m-row"><span class="m-dot d-google"></span><span style="min-width:0;"><span class="m-name">Gemini 2.5 Pro</span><br><span class="m-id">google/gemini-2.5-pro</span></span></div>
+        <div class="m-row"><span class="m-dot d-google"></span><span style="min-width:0;"><span class="m-name">Gemini 2.5 Flash</span><br><span class="m-id">google/gemini-2.5-flash</span></span></div>
+        <div style="margin-top:auto;padding:10px 14px;border-top:1px solid var(--line-soft);color:#6f6f6f;font-size:10px;">tap a result for pricing, limits, and copyable ID</div>
+      </div>
+    </figure>
+  </div>
+  <ul class="notes">
+    <li>Provider grouping replaces the provider column. Repetition becomes structure.</li>
+    <li>Context and both prices sit on one line per row, right aligned. Two numbers per row instead of six.</li>
+    <li>Existing keyboard shortcuts already support this: / and Cmd+K focus search today.</li>
+  </ul>
+</section>
+
+<!-- ============ E ============ -->
+<section class="variant">
+  <h2><span>E</span>Detail panel and expandable rows</h2>
+  <p class="why">The table hides the data people actually need to decide: modality support, output limits, exact IDs. This direction moves depth into a detail surface. Desktop shows a right-hand panel for the selected model. Mobile expands the row in place, an accordion with the same content. The grid itself gets shorter and quieter because it no longer carries everything.</p>
+  <div class="frames">
+    <figure class="frame">
+      <figcaption>Desktop, 1280px, one row selected</figcaption>
+      <div class="screen m light">
+        <div class="m-head">
+          <span class="m-title">models</span>
+          <span class="m-sub">612 AI models</span>
+          <span class="m-search" style="max-width:240px;">Search models <kbd>/</kbd></span>
+        </div>
+        <div class="e-split">
+          <table class="m-table" style="border-right:1px solid #e2e8e3;">
+            <thead><tr>
+              <th class="m-th">Provider</th><th class="m-th sorted">Model ↓</th><th class="m-th">Context</th>
+              <th class="m-th">In / 1M</th><th class="m-th">Out / 1M</th>
+            </tr></thead>
+            <tbody>
+              <tr><td class="m-td"><span class="strong">OpenAI</span></td><td class="m-td strong">GPT-5.2</td><td class="m-td">400K</td><td class="m-td">$1.25</td><td class="m-td">$10.00</td></tr>
+              <tr class="hl"><td class="m-td"><span class="strong">Anthropic</span></td><td class="m-td strong">Claude Sonnet 4.6</td><td class="m-td">200K</td><td class="m-td">$3.00</td><td class="m-td">$15.00</td></tr>
+              <tr><td class="m-td"><span class="strong">Google</span></td><td class="m-td strong">Gemini 3 Pro</td><td class="m-td">1M</td><td class="m-td">$1.25</td><td class="m-td">$10.00</td></tr>
+              <tr><td class="m-td"><span class="strong">DeepSeek</span></td><td class="m-td strong">DeepSeek V3.2</td><td class="m-td">128K</td><td class="m-td">$0.28</td><td class="m-td">$0.42</td></tr>
+              <tr><td class="m-td"><span class="strong">xAI</span></td><td class="m-td strong">Grok 4</td><td class="m-td">256K</td><td class="m-td">$3.00</td><td class="m-td">$15.00</td></tr>
+            </tbody>
+          </table>
+          <div class="e-detail">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span class="m-dot d-anthropic"></span>
+              <strong style="font-size:13px;">Claude Sonnet 4.6</strong>
+            </div>
+            <div class="m-id" style="margin-bottom:10px;">anthropic/claude-sonnet-4-6 <span class="m-pill">copy</span></div>
+            <div class="e-kv"><span>Context</span><span>200K</span></div>
+            <div class="e-kv"><span>Max output</span><span>64K</span></div>
+            <div class="e-kv"><span>Input / 1M</span><span>$3.00</span></div>
+            <div class="e-kv" style="border:0;"><span>Output / 1M</span><span>$15.00</span></div>
+            <div style="font-family:var(--mono);font-size:9px;color:#8b9992;text-transform:uppercase;letter-spacing:0.06em;margin-top:10px;">Output vs context</div>
+            <div class="e-bar"><i style="width:32%;"></i></div>
+            <div style="display:flex;gap:5px;margin-top:12px;">
+              <span class="m-pill on" style="border-color:#347858;color:#1b5239;background:#e8f2ec;">Reasoning</span>
+              <span class="m-pill on" style="border-color:#347858;color:#1b5239;background:#e8f2ec;">Tools</span>
+              <span class="m-pill on" style="border-color:#347858;color:#1b5239;background:#e8f2ec;">Vision</span>
+              <span class="m-pill">Closed</span>
+            </div>
+            <div style="margin-top:14px;color:#8b9992;font-size:10px;">Released 2026-04-02 · Updated 2026-08-30</div>
+          </div>
+        </div>
+      </div>
+    </figure>
+    <figure class="frame mobile">
+      <figcaption>Mobile, second row expanded</figcaption>
+      <div class="screen m light" style="min-height:430px;">
+        <div class="m-head">
+          <span class="m-title">models</span>
+          <span class="m-sub" style="margin-left:auto;">612 models</span>
+        </div>
+        <div class="m-search" style="margin:10px 14px 0;">Search models</div>
+        <div class="m-chips">
+          <span class="m-chip on">Frontier labs</span>
+          <span class="m-chip">Any date</span>
+        </div>
+        <div class="m-row"><span class="m-dot d-openai"></span><span class="m-name">GPT-5.2</span><span class="m-num" style="margin-left:auto;">400K · $1.25</span><span class="e-chev">›</span></div>
+        <div class="e-acc">
+          <div class="m-row hl">
+            <span class="m-dot d-anthropic"></span>
+            <span><span class="m-name">Claude Sonnet 4.6</span><br><span class="m-id">anthropic/claude-sonnet-4-6</span></span>
+            <span class="e-chev">⌄</span>
+          </div>
+          <div class="e-acc-body">
+            <div class="e-kv"><span>Context</span><span>200K</span></div>
+            <div class="e-kv"><span>Max output</span><span>64K</span></div>
+            <div class="e-kv"><span>Input / 1M</span><span>$3.00</span></div>
+            <div class="e-kv"><span>Output / 1M</span><span>$15.00</span></div>
+            <div class="e-kv" style="border:0;"><span>Modalities</span><span>text, image in</span></div>
+            <div style="display:flex;gap:5px;margin-top:8px;">
+              <span class="m-pill on" style="border-color:#347858;color:#1b5239;background:#e8f2ec;">Reasoning</span>
+              <span class="m-pill on" style="border-color:#347858;color:#1b5239;background:#e8f2ec;">Tools</span>
+              <span class="m-pill on" style="border-color:#347858;color:#1b5239;background:#e8f2ec;">Vision</span>
+              <span class="m-pill">Copy ID</span>
+            </div>
+          </div>
+        </div>
+        <div class="m-row"><span class="m-dot d-google"></span><span class="m-name">Gemini 3 Pro</span><span class="m-num" style="margin-left:auto;">1M · $1.25</span><span class="e-chev">›</span></div>
+        <div class="m-row"><span class="m-dot d-deepseek"></span><span class="m-name">DeepSeek V3.2</span><span class="m-num" style="margin-left:auto;">128K · $0.28</span><span class="e-chev">›</span></div>
+      </div>
+    </figure>
+  </div>
+  <ul class="notes">
+    <li>Expanding a row keeps scroll position and context. Nothing covers the list.</li>
+    <li>The copy-ID button finally has a home that works on touch, where hover-reveal buttons are unreachable today.</li>
+    <li>The output-vs-context bar shows how much of the window the model can actually write.</li>
+  </ul>
+</section>
+
+<footer class="doc">
+  <p>All five directions share one base move: the 1,535px fixed grid stops being the only layout. A and B differ in how much of the table survives on phones. C fixes filtering. D reorders the page around search. E adds the detail layer the grid never had. They combine cleanly: A's mobile cards plus C's bottom sheet plus E's expansion is one coherent build.</p>
+</footer>
+
+</body>
+</html>
