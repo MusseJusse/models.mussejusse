@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_SORT_DIRECTIONS, EMPTY_INDEX, filterModels,
   getAvailableFrontierProviders, loadModelIndex,
-  type ModelIndex, type ReleaseFilter, type SortDirection, type SortKey,
+  type ModelIndex, type ReleaseFilter, type Row, type SortDirection, type SortKey,
 } from "../lib/models";
 
 export type ExplorerState = ReturnType<typeof useModelData>;
@@ -17,6 +17,7 @@ export function useModelData() {
   const [sortDirection, setSortDirection] = useState<SortDirection>(
     DEFAULT_SORT_DIRECTIONS.release,
   );
+  const [selectedId, setSelectedId] = useState("");
   const [error, setError] = useState("");
   const deferredQuery = useDeferredValue(query);
 
@@ -60,6 +61,16 @@ export function useModelData() {
     setSortDirection(DEFAULT_SORT_DIRECTIONS[nextSort]);
   };
 
+  const selectedRow = useMemo(
+    () => selectedId ? index.rows.find((row) => `${row.providerId}:${row.id}` === selectedId) : undefined,
+    [index.rows, selectedId],
+  );
+
+  const toggleRow = (row: Row) =>
+    setSelectedId((current) =>
+      current === `${row.providerId}:${row.id}` ? "" : `${row.providerId}:${row.id}`,
+    );
+
   return {
     isLoading,
     error,
@@ -72,6 +83,9 @@ export function useModelData() {
     releaseFilter,
     sort,
     sortDirection,
+    selectedId,
+    selectedRow,
+    toggleRow,
     setQuery,
     toggleProvider: (value: string) =>
       setSelectedProviders((current) => {

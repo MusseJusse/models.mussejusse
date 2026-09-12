@@ -526,8 +526,67 @@ select {
   position: relative;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
+  overflow: clip;
   background: var(--background);
+}
+
+.table-split {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.table-split.has-detail {
+  grid-template-columns: minmax(0, 1fr) clamp(280px, 26vw, 340px);
+}
+
+.table-scroll,
+.table-canvas {
+  min-width: 0;
+  min-height: 0;
+}
+
+.table-scroll {
+  overflow: auto;
+}
+
+.table-canvas {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.table-canvas .table-grid {
+  width: 100%;
+  grid-template-columns: minmax(110px, 160px) minmax(190px, 1.7fr) minmax(150px, 1.5fr) minmax(85px, 1fr) minmax(90px, 1.05fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(64px, 0.85fr) minmax(90px, 1fr);
+}
+
+.table-split.has-detail > div:first-child {
+  border-right: 1px solid var(--border);
+}
+
+.detail-panel {
+  min-width: 0;
+  overflow-y: auto;
+  background: var(--surface);
+}
+
+.detail-panel .detail-body {
+  padding: 14px 16px;
+}
+
+@media (min-width: 901px) {
+  .row-detail {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .table-split .detail-panel {
+    display: none;
+  }
 }
 
 .table-grid {
@@ -590,6 +649,42 @@ button.header-cell:hover,
 
 .model-row:hover {
   background: var(--accent-soft);
+}
+
+.model-row.selected {
+  background: var(--accent-soft);
+  box-shadow: inset 2px 0 0 var(--accent);
+  border-bottom-color: transparent;
+}
+
+.detail-trigger {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.detail-trigger:focus-visible {
+  outline-offset: -2px;
+  outline: 2px solid var(--accent);
+}
+
+.row-detail {
+  position: sticky;
+  left: 0;
+  background: var(--accent-soft);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.row-detail .detail-body {
+  padding: 2px 16px 14px 27px;
+}
+
+.detail-body-inline {
+  border-top: 1px dashed var(--border);
 }
 
 .cell {
@@ -774,6 +869,174 @@ button.header-cell:hover,
   cursor: pointer;
 }
 
+.detail-body {
+  display: grid;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.detail-title img {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.detail-title strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-id {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.detail-id code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-tertiary);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-id button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text-secondary);
+  background: var(--background);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.detail-id button svg {
+  width: 11px;
+  height: 11px;
+}
+
+.detail-id button:active {
+  transform: translateY(1px);
+}
+
+.detail-id button.copied {
+  border-color: var(--accent);
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.detail-facts {
+  display: grid;
+  margin: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--border-soft);
+}
+
+.detail-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.detail-facts > div:nth-child(odd) {
+  padding-right: 12px;
+}
+
+.detail-facts > div:nth-child(even) {
+  padding-left: 12px;
+  border-left: 1px solid var(--border-soft);
+}
+
+.detail-facts dt {
+  color: var(--text-tertiary);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.detail-facts dd {
+  margin: 0;
+  color: var(--text);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-share small {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-tertiary);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.detail-bar {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--surface-strong);
+}
+
+.detail-bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.detail-tag {
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text-secondary);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.detail-tag.on {
+  border-color: var(--accent);
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.detail-dates {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 10px;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .provider-picker > summary,
   .release-picker > summary,
@@ -791,6 +1054,38 @@ button.header-cell:hover,
 @media (max-width: 900px) {
   .catalog {
     --header-height: 88px;
+  }
+
+  .table-split.has-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .table-split.has-detail > div:first-child {
+    border-right: 0;
+  }
+
+  .table-canvas {
+    overflow-x: auto;
+  }
+
+  .table-canvas .table-grid {
+    width: max-content;
+    min-width: 100%;
+    grid-template-columns: 170px 300px 310px 115px 135px 125px 125px 130px 95px 135px;
+  }
+
+  .table-body {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .row-detail {
+    width: 100vw;
+  }
+
+  .row-detail .detail-body {
+    max-width: 26rem;
+    padding: 2px 14px 14px 14px;
   }
 
   .catalog-header {
