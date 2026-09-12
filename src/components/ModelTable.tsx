@@ -1,139 +1,195 @@
-import { BrainIcon, CheckIcon, CodeIcon, CopyIcon, DatabaseIcon, EyeIcon, MagnifyingGlassIcon, WrenchIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, DatabaseIcon, MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ExplorerState } from "../hooks/useModelData";
 import type { Row, SortKey } from "../lib/models";
+import ModelDetails, { formatCost, formatLimit } from "./ModelDetails";
 
-const numberFormat = new Intl.NumberFormat("en", { maximumFractionDigits: 0 });
-const compactFormat = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
-const money = (value?: number) =>
-  typeof value === "number" ? `$${value.toFixed(value < 1 ? 3 : 2)}` : "-";
-const limit = (value?: number) =>
-  typeof value === "number"
-    ? value >= 1_000_000
-      ? compactFormat.format(value)
-      : numberFormat.format(value)
-    : "-";
+const rowKey = (row: Row) => `${row.providerId}:${row.id}`;
+const columns = ["provider", "model", "context", "input", "output"] as const;
 
 export default function ModelTable({ state }: { state: ExplorerState }) {
-  const [copiedId, setCopiedId] = useState("");
-  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const selected = state.visible.find((row) => rowKey(row) === selectedKey) ?? null;
 
-  useEffect(() => () => {
-    if (copyTimer.current) clearTimeout(copyTimer.current);
-  }, []);
+  // A selected model that a filter removes should not come back when the filter clears.
+  useEffect(() => {
+    if (selectedKey && !selected) setSelectedKey(null);
+  }, [selectedKey, selected]);
 
-  const copyModelId = async (id: string) => {
-    await navigator.clipboard.writeText(id);
-    setCopiedId(id);
-    if (copyTimer.current) clearTimeout(copyTimer.current);
-    copyTimer.current = setTimeout(() => setCopiedId(""), 1200);
+  const toggle = (key: string) => setSelectedKey((current) => (current === key ? null : key));
+  const close = () => {
+    setSelectedKey(null);
+    triggerRef.current?.focus({ preventScroll: true });
   };
 
   return (
-    <section className="table-viewport" aria-label="AI models">
-      <div className="table-grid header-row" role="row">
-        <SortHeader label="Provider" sort="providerName" state={state} />
-        <SortHeader label="Model" sort="name" state={state} />
-        <div className="header-cell" role="columnheader">Model ID</div>
-        <SortHeader label="Release" sort="release" state={state} />
-        <SortHeader label="Context" description="tokens" sort="context" state={state} />
-        <SortHeader label="Input" description="per 1M" sort="inputCost" state={state} />
-        <SortHeader label="Output" description="per 1M" sort="outputCost" state={state} />
-        <div className="header-cell" role="columnheader">Capabilities</div>
-        <div className="header-cell" role="columnheader">Weights</div>
-        <SortHeader label="Updated" sort="updated" state={state} />
-      </div>
-
+    <section
+      className="model-view"
+      aria-label="AI models"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && selectedKey) {
+          event.stopPropagation();
+          close();
+        }
+      }}
+    >
       {state.error ? (
         <TableState icon={<DatabaseIcon />} title="Catalog unavailable" message={state.error} action="Try again" onAction={() => window.location.reload()} />
       ) : state.isLoading ? (
         <LoadingRows />
-      ) : state.visible.length === 0 ? (
+      ) : !state.visible.length ? (
         <TableState icon={<MagnifyingGlassIcon />} title="No matching models" message="Change or reset the active filters." action="Reset filters" onAction={state.reset} />
       ) : (
-        <div className="table-body">
-          {state.visible.map((row) => (
-            <div className="table-grid model-row" role="row" key={`${row.providerId}:${row.id}`}>
-              <div className="cell provider-cell" role="cell">
-                <img src={`https://models.dev/logos/${row.providerId}.svg`} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
-                <span>{row.providerName}</span>
-              </div>
-              <div className="cell model-cell" role="cell">
-                <strong>{row.name}</strong>
-                {row.family ? <small>{row.family}</small> : null}
-              </div>
-              <div className="cell id-cell" role="cell">
-                <code>{row.id}</code>
-                <button type="button" onClick={() => copyModelId(row.id)} aria-label={`Copy ${row.id}`}>
-                  {copiedId === row.id ? <CheckIcon weight="bold" aria-hidden="true" /> : <CopyIcon aria-hidden="true" />}
-                </button>
-              </div>
-              <div className="cell mono muted" role="cell">{row.release_date ?? "-"}</div>
-              <div className="cell mono strong" role="cell">{limit(row.limit?.context)}</div>
-              <div className="cell mono strong" role="cell">{money(row.cost?.input)}</div>
-              <div className="cell mono strong" role="cell">{money(row.cost?.output)}</div>
-              <div className="cell capability-cell" role="cell"><Capabilities row={row} /></div>
-              <div className="cell mono" role="cell">{row.open_weights ? "Open" : "Closed"}</div>
-              <div className="cell mono muted" role="cell">{row.last_updated ?? "-"}</div>
-            </div>
-          ))}
+        <div className={`model-split${selected ? " has-selection" : ""}`}>
+          <div className="model-list">
+            <table className="model-table">
+              <caption className="sr-only">Model pricing per million tokens and context limits. Select a model for full details.</caption>
+              <colgroup>
+                {columns.map((column) => <col key={column} className={`${column}-column`} />)}
+              </colgroup>
+              <thead>
+                <tr>
+                  <SortHeader label="Provider" sort="providerName" state={state} />
+                  <SortHeader label="Model" sort="name" state={state} />
+                  <SortHeader label="Context" sort="context" state={state} />
+                  <SortHeader label="In / 1M" sort="inputCost" state={state} />
+                  <SortHeader label="Out / 1M" sort="outputCost" state={state} />
+                </tr>
+              </thead>
+              <tbody>
+                {state.visible.map((row) => {
+                  const key = rowKey(row);
+                  const open = key === selectedKey;
+                  return (
+                    <tr
+                      key={key}
+                      className={open ? "is-selected" : ""}
+                      onClick={(event) => {
+                        const button = event.currentTarget.querySelector<HTMLButtonElement>(".model-name-button");
+                        if (button) triggerRef.current = button;
+                        toggle(key);
+                      }}
+                    >
+                      <td>
+                        <span className="provider-name"><ProviderLogo row={row} /><span>{row.providerName}</span></span>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="model-name-button"
+                          aria-expanded={open}
+                          aria-controls={open ? "model-detail-panel" : undefined}
+                        >
+                          {row.name}
+                        </button>
+                      </td>
+                      <td className="numeric">{formatLimit(row.limit?.context)}</td>
+                      <td className="numeric">{formatCost(row.cost?.input)}</td>
+                      <td className="numeric">{formatCost(row.cost?.output)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <ul className="mobile-models">
+              {state.visible.map((row) => {
+                const key = rowKey(row);
+                const open = key === selectedKey;
+                const detailId = `mobile-details-${key.replace(":", "-")}`;
+                return (
+                  <li key={key} className={open ? "is-open" : ""}>
+                    <button
+                      type="button"
+                      className="mobile-model-row"
+                      aria-expanded={open}
+                      aria-controls={detailId}
+                      onClick={(event) => {
+                        triggerRef.current = event.currentTarget;
+                        toggle(key);
+                      }}
+                    >
+                      <ProviderLogo row={row} />
+                      <span className="mobile-model-name">
+                        <strong>{row.name}</strong>
+                        {open ? <small>{row.id}</small> : null}
+                      </span>
+                      {!open ? (
+                        <span className="mobile-model-stats">
+                          {formatLimit(row.limit?.context)}
+                          <span aria-hidden="true"> · </span>
+                          {formatCost(row.cost?.input)}
+                          <span className="sr-only"> input per million tokens</span>
+                        </span>
+                      ) : null}
+                      <CaretDownIcon className="mobile-chevron" data-open={open} aria-hidden="true" />
+                    </button>
+                    <div className="mobile-model-detail" data-open={open} id={detailId}>
+                      {open ? <div className="mobile-model-detail-inner"><ModelDetails row={row} inline /></div> : null}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+          {selected ? (
+            <aside className="model-detail-panel" id="model-detail-panel" aria-label={`${selected.name} details`}>
+              <button type="button" className="detail-close" onClick={close} aria-label="Close details"><XIcon aria-hidden="true" /></button>
+              <ModelDetails key={rowKey(selected)} row={selected} />
+            </aside>
+          ) : null}
         </div>
       )}
     </section>
   );
 }
 
-function SortHeader({ label, description, sort, state }: { label: string; description?: string; sort: SortKey; state: ExplorerState }) {
-  const active = state.sort === sort;
+function ProviderLogo({ row }: { row: Row }) {
   return (
-    <button
-      className={`header-cell ${active ? "active" : ""}`}
-      type="button"
-      role="columnheader"
-      aria-sort={active ? state.sortDirection : "none"}
-      onClick={() => state.selectSort(sort)}
-    >
-      <span>{label}{active ? state.sortDirection === "ascending" ? " ↑" : " ↓" : ""}</span>
-      {description ? <small>{description}</small> : null}
-    </button>
+    <img
+      className="provider-logo"
+      src={`https://models.dev/logos/${row.providerId}.svg`}
+      alt=""
+      loading="lazy"
+      onError={(event) => { event.currentTarget.style.visibility = "hidden"; }}
+    />
   );
 }
 
-function Capabilities({ row }: { row: Row }) {
-  const items = [
-    [row.reasoning, BrainIcon, "Reasoning"],
-    [row.tool_call, WrenchIcon, "Tool calling"],
-    [row.multimodal, EyeIcon, "Multimodal input"],
-    [row.open_weights, CodeIcon, "Open weights"],
-  ] as const;
-  const active = items.filter(([enabled]) => enabled);
-  if (!active.length) return <span className="no-capabilities">-</span>;
+function SortHeader({ label, sort, state }: { label: string; sort: SortKey; state: ExplorerState }) {
+  const active = state.sort === sort;
   return (
-    <div className="capability-icons">
-      {active.map(([, Icon, label]) => <span key={label} title={label}><Icon aria-label={label} /></span>)}
-    </div>
+    <th scope="col" aria-sort={active ? state.sortDirection : "none"}>
+      <button type="button" className={active ? "active" : ""} onClick={() => state.selectSort(sort)}>
+        {label}{active ? state.sortDirection === "ascending" ? " ↑" : " ↓" : ""}
+      </button>
+    </th>
   );
 }
 
 function LoadingRows() {
   return (
-    <div className="table-body" aria-label="Loading model data">
-      {Array.from({ length: 18 }).map((_, row) => (
-        <div className="table-grid model-row" key={row} aria-hidden="true">
-          {Array.from({ length: 10 }).map((__, cell) => <div className="cell" key={cell}><span className={`loading-line size-${(row + cell) % 3}`} /></div>)}
-        </div>
-      ))}
+    <div className="model-split">
+      <div className="model-list" aria-busy="true" aria-label="Loading model data">
+        <table className="model-table">
+          <colgroup>
+            {columns.map((column) => <col key={column} className={`${column}-column`} />)}
+          </colgroup>
+          <tbody>
+            {Array.from({ length: 12 }).map((_, row) => (
+              <tr key={row} aria-hidden="true">
+                {columns.map((column, cell) => (
+                  <td key={column}><span className={`loading-line size-${(row + cell) % 3}`} /></td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
 
 function TableState({ icon, title, message, action, onAction }: { icon: ReactNode; title: string; message: string; action: string; onAction: () => void }) {
-  return (
-    <div className="table-state">
-      <span>{icon}</span>
-      <strong>{title}</strong>
-      <p>{message}</p>
-      <button type="button" onClick={onAction}>{action}</button>
-    </div>
-  );
+  return <div className="table-state"><span>{icon}</span><strong>{title}</strong><p>{message}</p><button type="button" onClick={onAction}>{action}</button></div>;
 }
