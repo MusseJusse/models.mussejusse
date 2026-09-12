@@ -129,14 +129,9 @@ export function buildModelIndex(data: Record<string, ApiProvider>): ModelIndex {
   };
 }
 
-export type Capability = "all" | "reasoning" | "tools" | "vision";
-export type Weights = "all" | "open" | "closed";
-
 export type ModelFilters = {
   query: string;
   selectedProviders: ReadonlySet<string>;
-  capability: Capability;
-  weights: Weights;
   releaseFilter: ReleaseFilter;
   sort: SortKey;
   sortDirection: SortDirection;
@@ -152,11 +147,6 @@ export function filterModels(index: ModelIndex, filters: ModelFilters) {
     const position = filters.sortDirection === "ascending" ? cursor : ids.length - cursor - 1;
     const row = index.rows[ids[position]];
     if (!filters.selectedProviders.has(row.providerName)) continue;
-    if (filters.capability === "reasoning" && !row.reasoning) continue;
-    if (filters.capability === "tools" && !row.tool_call) continue;
-    if (filters.capability === "vision" && !row.multimodal) continue;
-    if (filters.weights === "open" && !row.open_weights) continue;
-    if (filters.weights === "closed" && row.open_weights) continue;
     if (!matchesReleaseFilter(row, filters.releaseFilter)) continue;
     if (!terms.every((term) => row.searchText.includes(term))) continue;
     filteredCount += 1;

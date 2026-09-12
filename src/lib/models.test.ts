@@ -19,7 +19,7 @@ const index = buildModelIndex({ openai: {
   id: "openai", name: "OpenAI", models: Object.fromEntries(models.map(model => [model.id, model])),
 } });
 const defaults: ModelFilters = {
-  query: "", selectedProviders: new Set(index.providers), capability: "all", weights: "all",
+  query: "", selectedProviders: new Set(index.providers),
   releaseFilter: "all", sort: "name", sortDirection: "ascending",
 };
 const ids = (filters: Partial<ModelFilters> = {}) =>
@@ -31,12 +31,8 @@ test("search combines case-insensitive terms across provider, family, and modali
   assert.deepEqual(ids({ query: "missing" }), []);
 });
 
-test("provider, capability, weights, and release filters compose", () => {
+test("provider and release filters compose", () => {
   assert.deepEqual(ids({ selectedProviders: new Set() }), []);
-  assert.deepEqual(ids({ capability: "vision" }), ["alpha"]);
-  assert.deepEqual(ids({ capability: "reasoning", weights: "open", releaseFilter: "thisYear" }), ["alpha"]);
-  assert.deepEqual(ids({ capability: "tools", weights: "closed" }), []);
-  assert.deepEqual(ids({ weights: "closed" }), ["beta", "unknown"]);
   assert.deepEqual(ids({ releaseFilter: "lastYear" }), ["beta"]);
   assert.deepEqual(ids({ releaseFilter: "undated" }), ["unknown"]);
 });

@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_SORT_DIRECTIONS, EMPTY_INDEX, filterModels,
   getAvailableFrontierProviders, loadModelIndex,
-  type Capability, type ModelIndex, type ReleaseFilter, type SortDirection, type SortKey, type Weights,
+  type ModelIndex, type ReleaseFilter, type SortDirection, type SortKey,
 } from "../lib/models";
 
 export type ExplorerState = ReturnType<typeof useModelData>;
@@ -12,8 +12,6 @@ export function useModelData() {
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [selectedProviders, setSelectedProviders] = useState<Set<string>>(new Set());
-  const [capability, setCapability] = useState<Capability>("all");
-  const [weights, setWeights] = useState<Weights>("all");
   const [releaseFilter, setReleaseFilter] = useState<ReleaseFilter>("all");
   const [sort, setSort] = useState<SortKey>("release");
   const [sortDirection, setSortDirection] = useState<SortDirection>(
@@ -42,14 +40,12 @@ export function useModelData() {
   }, []);
 
   const result = useMemo(() => filterModels(index, {
-    query: deferredQuery, selectedProviders, capability, weights, releaseFilter, sort, sortDirection,
-  }), [capability, deferredQuery, index, releaseFilter, selectedProviders, sort, sortDirection, weights]);
+    query: deferredQuery, selectedProviders, releaseFilter, sort, sortDirection,
+  }), [deferredQuery, index, releaseFilter, selectedProviders, sort, sortDirection]);
 
   const reset = () => {
     setQuery("");
     setSelectedProviders(new Set(getAvailableFrontierProviders(index.providers)));
-    setCapability("all");
-    setWeights("all");
     setReleaseFilter("all");
     setSort("release");
     setSortDirection(DEFAULT_SORT_DIRECTIONS.release);
@@ -73,8 +69,6 @@ export function useModelData() {
     totalModels: index.rows.length,
     query,
     selectedProviders,
-    capability,
-    weights,
     releaseFilter,
     sort,
     sortDirection,
@@ -90,8 +84,6 @@ export function useModelData() {
     selectFrontierProviders: () =>
       setSelectedProviders(new Set(getAvailableFrontierProviders(index.providers))),
     clearProviders: () => setSelectedProviders(new Set()),
-    setCapability,
-    setWeights,
     setReleaseFilter,
     selectSort,
     reset,

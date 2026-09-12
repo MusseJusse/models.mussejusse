@@ -68,8 +68,6 @@ function FilterBar({ state }: { state: ExplorerState }) {
   const defaultProviders = getAvailableFrontierProviders(state.providers);
   const hasFilters =
     !isExactProviderSelection(state.selectedProviders, defaultProviders) ||
-    state.capability !== "all" ||
-    state.weights !== "all" ||
     state.releaseFilter !== "all" ||
     state.query !== "";
 
@@ -77,46 +75,6 @@ function FilterBar({ state }: { state: ExplorerState }) {
     <section className="filter-bar" aria-label="Model filters">
       <span className="filter-label">Filters</span>
       <ProviderPicker state={state} />
-      <span className="filter-separator capability-filter-separator" aria-hidden="true" />
-
-      <div className="filter-group capability-filter" aria-label="Capability">
-        {([
-          ["all", "All"],
-          ["reasoning", "Reasoning"],
-          ["tools", "Tools"],
-          ["vision", "Vision"],
-        ] as const).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            className={state.capability === id ? "active" : ""}
-            aria-pressed={state.capability === id}
-            onClick={() => state.setCapability(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <span className="filter-separator" aria-hidden="true" />
-      <div className="filter-group" aria-label="Model weights">
-        {([
-          ["all", "Any weights"],
-          ["open", "Open"],
-          ["closed", "Closed"],
-        ] as const).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            className={state.weights === id ? "active" : ""}
-            aria-pressed={state.weights === id}
-            onClick={() => state.setWeights(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
       <ReleasePicker state={state} />
 
       {hasFilters ? <button className="reset-button" type="button" onClick={state.reset}>Reset</button> : null}

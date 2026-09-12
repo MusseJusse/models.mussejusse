@@ -96,7 +96,6 @@ select {
 .catalog-title,
 .header-actions,
 .filter-bar,
-.filter-group,
 .status-bar,
 .capability-icons {
   display: flex;
@@ -232,19 +231,6 @@ select {
   margin-right: 3px;
 }
 
-.filter-separator {
-  flex: 0 0 auto;
-  width: 1px;
-  height: 20px;
-  margin: 0 3px;
-  background: var(--border);
-}
-
-.filter-group {
-  gap: 3px;
-}
-
-.filter-group button,
 .provider-picker > summary,
 .release-picker > summary,
 .reset-button {
@@ -259,7 +245,6 @@ select {
   cursor: pointer;
 }
 
-.filter-group button:hover,
 .provider-picker > summary:hover,
 .release-picker > summary:hover,
 .reset-button:hover {
@@ -267,7 +252,6 @@ select {
   color: var(--text);
 }
 
-.filter-group button.active,
 .provider-picker > summary.active,
 .release-picker > summary.active {
   border-color: var(--accent);
@@ -275,7 +259,6 @@ select {
   background: var(--accent-soft);
 }
 
-.filter-group button:active,
 .provider-picker > summary:active,
 .release-picker > summary:active,
 .reset-button:active,
@@ -792,7 +775,6 @@ button.header-cell:hover,
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .filter-group button,
   .provider-picker > summary,
   .release-picker > summary,
   .release-menu button,
@@ -835,11 +817,6 @@ button.header-cell:hover,
   }
 
   .filter-label {
-    display: none;
-  }
-
-  .capability-filter,
-  .capability-filter-separator {
     display: none;
   }
 
