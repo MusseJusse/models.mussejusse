@@ -17,7 +17,8 @@ pnpm dev
 - `src/hooks/useModelData.ts` loads the catalog and owns search, filter, and sort state.
 - `src/components/ModelExplorer.tsx` composes the page, search, filters, and status bar.
 - `src/components/FilterPickers.tsx` contains the provider and release menus.
-- `src/components/ModelTable.tsx` renders rows, sorting controls, and loading and error states.
+- `src/components/ModelTable.tsx` renders rows, sorting controls, the detail panel, the mobile accordion, and loading and error states.
+- `src/components/ModelDetails.tsx` renders the facts, capabilities, and copy-ID control shared by the panel and accordion.
 - `src/styles/global.css` contains the layout and responsive styles.
 
 The default provider selection is the available frontier labs. Results show at most 250 rows while the status bar counts all matches. Sort indexes are built once when data loads; filter changes scan those indexes without sorting again.
