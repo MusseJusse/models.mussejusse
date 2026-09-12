@@ -4,7 +4,6 @@
   font-family: "Aptos", "Segoe UI", system-ui, -apple-system, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 * {

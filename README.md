@@ -1,43 +1,23 @@
-# Astro Starter Kit: Minimal
+# Model catalog
+
+A searchable AI model catalog built with Astro, React, and Tailwind CSS. The browser loads provider and model data from `https://models.dev/api.json`.
+
+Use Node.js 22.12 or newer and pnpm.
 
 ```sh
-pnpm create astro@latest -- --template minimal
+pnpm install
+pnpm dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+`pnpm check` checks Astro and TypeScript, `pnpm test` tests catalog filtering and sorting, and `pnpm build` creates the static site in `dist/`. Use `pnpm preview` to inspect that build locally.
 
-## 🚀 Project Structure
+## Code layout
 
-Inside of your Astro project, you'll see the following folders and files:
+- `src/lib/models.ts` defines the catalog data, builds sort indexes, and filters models.
+- `src/hooks/useModelData.ts` loads the catalog and owns search, filter, and sort state.
+- `src/components/ModelExplorer.tsx` composes the page, search, filters, and status bar.
+- `src/components/FilterPickers.tsx` contains the provider and release menus.
+- `src/components/ModelTable.tsx` renders rows, sorting controls, and loading and error states.
+- `src/styles/global.css` contains the layout and responsive styles.
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+The default provider selection is the available frontier labs. Results show at most 250 rows while the status bar counts all matches. Sort indexes are built once when data loads; filter changes scan those indexes without sorting again.
