@@ -57,7 +57,7 @@ export const EMPTY_INDEX: ModelIndex = {
 export const currentYear = new Date().getFullYear();
 const nowTime = Date.now();
 const dayMs = 24 * 60 * 60 * 1000;
-const FRONTIER_PROVIDERS = ["OpenAI", "Google", "Anthropic", "Z.AI", "xAI"] as const;
+const FRONTIER_PROVIDERS = ["OpenAI", "Google", "Anthropic", "Z.AI", "xAI", "DeepSeek", "Moonshot AI", "Alibaba"] as const;
 export const DEFAULT_SORT_DIRECTIONS: Record<SortKey, SortDirection> = {
   release: "descending",
   updated: "descending",

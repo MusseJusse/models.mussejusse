@@ -76,8 +76,8 @@ test("counts all matches while limiting rendered rows", () => {
 });
 
 test("frontier defaults use available providers and require an exact selection", () => {
-  const available = getAvailableFrontierProviders(["OpenAI", "Other", "Google"]);
-  assert.deepEqual(available, ["OpenAI", "Google"]);
-  assert.equal(isExactProviderSelection(new Set(["Google", "OpenAI"]), available), true);
+  const available = getAvailableFrontierProviders(["OpenAI", "Other", "Google", "DeepSeek", "Moonshot AI", "Alibaba"]);
+  assert.deepEqual(available, ["OpenAI", "Google", "DeepSeek", "Moonshot AI", "Alibaba"]);
+  assert.equal(isExactProviderSelection(new Set(available.toReversed()), available), true);
   assert.equal(isExactProviderSelection(new Set(["OpenAI", "Other"]), available), false);
 });

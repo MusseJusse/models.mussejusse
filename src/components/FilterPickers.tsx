@@ -214,7 +214,7 @@ export function ProviderPicker({ state }: { state: ExplorerState }) {
             className={frontierSelected ? "active" : ""}
             aria-pressed={frontierSelected}
             onClick={state.selectFrontierProviders}
-            title="OpenAI, Google, Anthropic, Z.AI, and xAI"
+            title={availableFrontierProviders.join(", ")}
           >
             Frontier labs
           </button>
