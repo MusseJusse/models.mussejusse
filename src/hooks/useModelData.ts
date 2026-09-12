@@ -1,9 +1,11 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_SORT_DIRECTIONS, EMPTY_INDEX, filterModels,
   getAvailableFrontierProviders, loadModelIndex,
-  type ModelIndex, type ReleaseFilter, type SortDirection, type SortKey,
+  type ModelIndex, type ReleaseFilter, type Row, type SortDirection, type SortKey,
 } from "../lib/models";
+
+const rowKey = (row: Row) => `${row.providerId}:${row.id}`;
 
 export type ExplorerState = ReturnType<typeof useModelData>;
 
@@ -17,6 +19,7 @@ export function useModelData() {
   const [sortDirection, setSortDirection] = useState<SortDirection>(
     DEFAULT_SORT_DIRECTIONS.release,
   );
+  const [selectedId, setSelectedId] = useState("");
   const [error, setError] = useState("");
   const deferredQuery = useDeferredValue(query);
 
@@ -60,6 +63,18 @@ export function useModelData() {
     setSortDirection(DEFAULT_SORT_DIRECTIONS[nextSort]);
   };
 
+  const selectRow = useCallback((row: Row) => {
+    const key = rowKey(row);
+    setSelectedId((current) => (current === key ? "" : key));
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedId(""), []);
+
+  const selectedRow = useMemo(
+    () => (selectedId ? index.rows.find((row) => rowKey(row) === selectedId) : undefined),
+    [index.rows, selectedId],
+  );
+
   return {
     isLoading,
     error,
@@ -72,6 +87,10 @@ export function useModelData() {
     releaseFilter,
     sort,
     sortDirection,
+    selectedId,
+    selectedRow,
+    selectRow,
+    clearSelection,
     setQuery,
     toggleProvider: (value: string) =>
       setSelectedProviders((current) => {
